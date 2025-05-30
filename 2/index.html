@@ -1,55 +1,316 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Bingo Checker</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#2196f3" />
-  <link rel="manifest" href="manifest.json" />
-  <style>
-    body { font-family: sans-serif; margin: 2rem; background: #f0f0f0; color: #333; }
-    h1 { color: #2196f3; }
-    input, button, textarea {
-      display: block; width: 100%; margin: 1rem 0; padding: 0.5rem;
-      font-size: 1rem;
-    }
-    #result { font-weight: bold; color: green; }
-  </style>
-</head>
-<body>
-  <h1>Bingo Checker</h1>
-  <label for="card">Upload a photo of your Bingo card:</label>
-  <input type="file" accept="image/*" id="card" />
 
-  <label for="numbers">Enter called numbers (e.g. B1,I16,N31,G46,O61):</label>
-  <textarea id="numbers" placeholder="Comma-separated called numbers"></textarea>
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <title>Bingo Checker PWA</title>
+
+  <link rel="manifest" href="manifest.json">
+
+  <style>
+
+    body { font-family: sans-serif; padding: 20px; background: #f0f0f0; }
+
+    input, select, button, textarea {
+
+      display: block; width: 100%; margin: 10px 0; padding: 10px; font-size: 16px;
+
+    }
+
+    #result { font-weight: bold; margin-top: 20px; }
+
+  </style>
+
+</head>
+
+<body>
+
+  <h1>Bingo Checker</h1>
+
+
+
+  <label for="pattern">Choose Bingo Pattern:</label>
+
+  <select id="pattern">
+
+    <option>Blackout</option>
+
+    <option>Four Corners</option>
+
+    <option>Horizontal Line</option>
+
+    <option>Vertical Line</option>
+
+    <option>Diagonal Line</option>
+
+    <option>X Pattern</option>
+
+    <option>T Pattern</option>
+
+    <option>L Pattern</option>
+
+    <option>Z Pattern</option>
+
+    <option>Diamond Pattern</option>
+
+    <option>Postage Stamp</option>
+
+    <option>Crazy Kite</option>
+
+    <option>Arrow Pattern</option>
+
+    <option>Plus Sign (+)</option>
+
+    <option>Small Picture Frame</option>
+
+    <option>Large Picture Frame</option>
+
+    <option>Outside Edge</option>
+
+    <option>Inside Square</option>
+
+    <option>Custom Pattern</option>
+
+    <option>Any Bingo</option>
+
+  </select>
+
+
+
+  <label for="card">Enter Bingo Card (5x5 grid, comma-separated rows):</label>
+
+  <textarea id="card" rows="5" placeholder="e.g. 1,16,31,46,61\n2,17,32,47,62..."></textarea>
+
+
+
+  <label for="called">Enter Called Numbers (comma-separated):</label>
+
+  <textarea id="called" rows="2" placeholder="e.g. 1,2,3,4,5,10,15,..."></textarea>
+
+
 
   <button onclick="checkBingo()">Check for Bingo</button>
+
+
+
   <div id="result"></div>
 
+
+
   <script>
-    function checkBingo() {
-      const input = document.getElementById("numbers").value.toUpperCase().split(',').map(x => x.trim());
-      const card = [
-        ['B1', 'I16', 'N31', 'G46', 'O61'],
-        ['B2', 'I17', 'N32', 'G47', 'O62'],
-        ['B3', 'I18', 'FREE', 'G48', 'O63'],
-        ['B4', 'I19', 'N34', 'G49', 'O64'],
-        ['B5', 'I20', 'N35', 'G50', 'O65'],
-      ];
-      let bingo = false;
-      for (let row of card) {
-        if (row.every(num => num === "FREE" || input.includes(num))) {
-          bingo = true;
-          break;
-        }
-      }
-      document.getElementById("result").textContent = bingo ? "🎉 Bingo!" : "❌ No Bingo yet!";
+
+    function parseCard(text) {
+
+      return text.trim().split('\n').map(row => row.split(',').map(n => parseInt(n.trim())));
+
     }
 
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js');
+
+
+    function isMarked(card, called, r, c) {
+
+      return called.includes(card[r][c]);
+
     }
+
+
+
+    function checkPattern(card, called, pattern) {
+
+      const marked = (r, c) => isMarked(card, called, r, c);
+
+      switch (pattern) {
+
+        case 'Blackout':
+
+          return card.every((row, r) => row.every((_, c) => marked(r, c)));
+
+        case 'Four Corners':
+
+          return marked(0,0) && marked(0,4) && marked(4,0) && marked(4,4);
+
+        case 'Horizontal Line':
+
+          return card.some((_, r) => card[r].every((_, c) => marked(r, c)));
+
+        case 'Vertical Line':
+
+          return card[0].some((_, c) => card.every((_, r) => marked(r, c)));
+
+        case 'Diagonal Line':
+
+          return [0,1,2,3,4].every(i => marked(i,i)) || [0,1,2,3,4].every(i => marked(i,4-i));
+
+        case 'X Pattern':
+
+          return [0,1,2,3,4].every(i => marked(i,i) && marked(i,4-i));
+
+        case 'T Pattern':
+
+          return card[0].every((_, c) => marked(0,c)) && [0,1,2,3,4].every(r => marked(r,2));
+
+        case 'L Pattern':
+
+          return [0,1,2,3,4].every(r => marked(r,0)) && card[4].every((_, c) => marked(4,c));
+
+        case 'Z Pattern':
+
+          return [0,1,2,3,4].every(i => marked(i,4-i)) && (marked(0,0) && marked(0,1) && marked(4,3) && marked(4,4));
+
+        case 'Diamond Pattern':
+
+          return marked(0,2) && marked(1,1) && marked(1,3) && marked(2,0) && marked(2,4) && marked(3,1) && marked(3,3) && marked(4,2);
+
+        case 'Postage Stamp':
+
+          return marked(0,0) && marked(0,1) && marked(1,0) && marked(1,1);
+
+        case 'Crazy Kite':
+
+          return marked(0,4) && marked(1,3) && marked(2,2) && marked(3,1) && marked(4,0);
+
+        case 'Arrow Pattern':
+
+          return marked(0,2) && marked(1,2) && marked(2,2) && marked(2,1) && marked(2,3);
+
+        case 'Plus Sign (+)':
+
+          return [0,1,2,3,4].every(i => marked(i,2)) && card[2].every((_, c) => marked(2,c));
+
+        case 'Small Picture Frame':
+
+          return [0,1,3,4].every(r => card[r].every((_, c) => (c === 0 || c === 4) ? marked(r, c) : true));
+
+        case 'Large Picture Frame':
+
+          return card.map((row, r) => row.map((_, c) =>
+
+            (r === 0 || r === 4 || c === 0 || c === 4) ? marked(r, c) : true)).flat().every(v => v);
+
+        case 'Outside Edge':
+
+          return checkPattern(card, called, 'Large Picture Frame');
+
+        case 'Inside Square':
+
+          return [1,2,3].every(r => [1,2,3].every(c => marked(r,c)));
+
+        case 'Any Bingo':
+
+          return checkPattern(card, called, 'Horizontal Line') ||
+
+                 checkPattern(card, called, 'Vertical Line') ||
+
+                 checkPattern(card, called, 'Diagonal Line');
+
+        case 'Custom Pattern':
+
+          return false; // Placeholder
+
+        default:
+
+          return false;
+
+      }
+
+    }
+
+
+
+    function checkBingo() {
+
+      const pattern = document.getElementById('pattern').value;
+
+      const cardText = document.getElementById('card').value;
+
+      const calledText = document.getElementById('called').value;
+
+      const called = calledText.split(',').map(n => parseInt(n.trim()));
+
+      const card = parseCard(cardText);
+
+      const valid = checkPattern(card, called, pattern);
+
+      document.getElementById('result').innerText = valid ? '✅ Bingo!' : '❌ Not a Bingo Yet';
+
+    }
+
+
+
+    // PWA
+
+    if ('serviceWorker' in navigator) {
+
+      navigator.serviceWorker.register('sw.js');
+
+    }
+
   </script>
+
+
+
+  <script type="application/json" id="manifest">
+
+  {
+
+    "name": "Bingo Checker",
+
+    "short_name": "Bingo",
+
+    "start_url": ".",
+
+    "display": "standalone",
+
+    "background_color": "#ffffff",
+
+    "theme_color": "#317EFB",
+
+    "icons": [{
+
+      "src": "https://cdn-icons-png.flaticon.com/512/1048/1048940.png",
+
+      "sizes": "512x512",
+
+      "type": "image/png"
+
+    }]
+
+  }
+
+  </script>
+
+
+
+  <script id="sw" type="javascript/worker">
+
+    self.addEventListener('install', event => {
+
+      event.waitUntil(caches.open('bingo-v1').then(cache => {
+
+        return cache.addAll(['./']);
+
+      }));
+
+    });
+
+    self.addEventListener('fetch', event => {
+
+      event.respondWith(
+
+        caches.match(event.request).then(response => response || fetch(event.request))
+
+      );
+
+    });
+
+  </script>
+
 </body>
+
 </html>
+
