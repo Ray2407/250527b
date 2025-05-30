@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Bingo Checker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#2196f3" />
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    body { font-family: sans-serif; margin: 2rem; background: #f0f0f0; color: #333; }
+    h1 { color: #2196f3; }
+    input, button, textarea {
+      display: block; width: 100%; margin: 1rem 0; padding: 0.5rem;
+      font-size: 1rem;
+    }
+    #result { font-weight: bold; color: green; }
+  </style>
+</head>
+<body>
+  <h1>Bingo Checker</h1>
+  <label for="card">Upload a photo of your Bingo card:</label>
+  <input type="file" accept="image/*" id="card" />
+
+  <label for="numbers">Enter called numbers (e.g. B1,I16,N31,G46,O61):</label>
+  <textarea id="numbers" placeholder="Comma-separated called numbers"></textarea>
+
+  <button onclick="checkBingo()">Check for Bingo</button>
+  <div id="result"></div>
+
+  <script>
+    function checkBingo() {
+      const input = document.getElementById("numbers").value.toUpperCase().split(',').map(x => x.trim());
+      const card = [
+        ['B1', 'I16', 'N31', 'G46', 'O61'],
+        ['B2', 'I17', 'N32', 'G47', 'O62'],
+        ['B3', 'I18', 'FREE', 'G48', 'O63'],
+        ['B4', 'I19', 'N34', 'G49', 'O64'],
+        ['B5', 'I20', 'N35', 'G50', 'O65'],
+      ];
+      let bingo = false;
+      for (let row of card) {
+        if (row.every(num => num === "FREE" || input.includes(num))) {
+          bingo = true;
+          break;
+        }
+      }
+      document.getElementById("result").textContent = bingo ? "🎉 Bingo!" : "❌ No Bingo yet!";
+    }
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
+  </script>
+</body>
+</html>
